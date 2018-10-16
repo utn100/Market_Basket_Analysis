@@ -3,6 +3,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 
+import matplotlib.pyplot as plt
 import pandas as pd
 import plotly.graph_objs as go
 import base64
@@ -10,7 +11,6 @@ from mlxtend.preprocessing import TransactionEncoder
 from mlxtend.frequent_patterns import apriori, association_rules
 import networkx as nx
 import numpy as np
-import matplotlib.pyplot as plt
 
 app = dash.Dash()
 server = app.server

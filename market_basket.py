@@ -6,7 +6,6 @@ from dash.dependencies import Input, Output
 import matplotlib.pyplot as plt
 import pandas as pd
 import plotly.graph_objs as go
-import base64
 from mlxtend.preprocessing import TransactionEncoder
 from mlxtend.frequent_patterns import apriori, association_rules
 import networkx as nx

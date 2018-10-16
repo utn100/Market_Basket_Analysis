@@ -3,27 +3,23 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 
-import matplotlib.pyplot as plt
 import pandas as pd
 import plotly.graph_objs as go
 from mlxtend.preprocessing import TransactionEncoder
 from mlxtend.frequent_patterns import apriori, association_rules
 import networkx as nx
 import numpy as np
+import matplotlib.pyplot as plt
+#import csv
 
 app = dash.Dash()
-server = app.server
+serer = app.server
 app.css.append_css({'external_url':'https://codepen.io/chriddyp/pen/bWLwgP.css'})
 def encode_image(image_file):
     encoded = base64.b64encode(open(image_file, 'rb').read())
     return 'data:image/png;base64,{}'.format(encoded.decode())
 
-df = pd.read_csv("Data/BreadBasket_DMS.csv")
-# Drop row of NONE items
-df.drop(df[df['Item']=='NONE'].index,inplace=True)
-# Create month and hour columns
-df['Month'] = df['Date'].apply(lambda x:x.split("-")[1])
-df['Hour'] = df['Time'].apply(lambda x:int(str(pd.to_datetime(x).round('H')).split(" ")[1].split(":")[0]))
+df = pd.read_csv("Data/BreadBasket_DMS_modified.csv")
 # Get counts of each item per hour for each months
 byitem=df.groupby(["Month","Hour",'Item']).size().reset_index().sort_values(by="Hour")
 byitem.rename(columns={0:'Total'},inplace=True)
@@ -37,13 +33,11 @@ colors=['#848484','#3d567f','#70b578','#8923c4','#ffd77a','#e6b2ff',
               '#00fff2','#3a51ff','#73f4d8','#fffa00','#ff6600','#00b2ff','#cb00ff',
               '#59ed28','#c7fce9','#d2d6d1','#d1cd9c','#9b6a47','#ff7777','#499b5a',
               '#c49c68','#349dad','#b200ff','#7c0048','#289bc9']
-month_dict = {'01':'January','02':'February','03':'March','04':'April','10':'October','11':'November','12':'December'}
 
-items = []
-for i in df['Transaction'].unique():
-    itemlist = list(set(df[df["Transaction"]==i]['Item']))
-    if len(itemlist) > 0:
-        items.append(itemlist)
+month_dict = {1:'January',2:'February',3:'March',4:'April',10:'October',11:'November',12:'December'}
+
+with open('Data/itemlist.csv','r') as f:
+    items = [line.rstrip().split(',') for line in f]
 
 tran_encoder = TransactionEncoder()
 oht_ary = tran_encoder.fit(items).transform(items)
@@ -65,7 +59,7 @@ app.layout = html.Div([
                 html.Div([
                 dcc.Dropdown(id='months',
                             options=[{'label':month_dict[i],'value':i} for i in list(df['Month'].unique())],
-                            value = '01')
+                            value = 1)
                 ]),
                 dcc.Graph(id='composition-graph')]),
                 html.Div([

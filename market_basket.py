@@ -186,9 +186,15 @@ def update_networkgraph(support_min, lift_min):
             y0s.append(pos[edge[0]][1])
             y1s.append(pos[edge[1]][1])
 
+        x_cor=[]
+        y_cor=[]
+        for node in G1:
+            x_cor.append(pos[node][0])
+            y_cor.append(pos[node][1])
+
         node_trace = go.Scatter(
-                x=[],
-                y=[],
+                x=x_cor,
+                y=y_cor,
                 text=texts,
                 mode='markers',
                 hoverinfo='text',
@@ -196,10 +202,6 @@ def update_networkgraph(support_min, lift_min):
                     color=color_map,
                     size=sizes,
                     line=dict(width=2,color="black")))
-        for node in G1:
-            node_trace['x'].append(pos[node][0])
-            node_trace['y'].append(pos[node][1])
-
 
         fig = {'data':[node_trace],
               'layout':go.Layout(

@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 #import csv
 
 app = dash.Dash()
-serer = app.server
+server = app.server
 app.css.append_css({'external_url':'https://codepen.io/chriddyp/pen/bWLwgP.css'})
 def encode_image(image_file):
     encoded = base64.b64encode(open(image_file, 'rb').read())

@@ -56,24 +56,27 @@ app.layout = html.Div([
                 ]),
                 dcc.Graph(id='itemgraph')]),
                 html.Div([
-                html.Div([
+                html.Div([html.H6("Pick a month"),
                 dcc.Dropdown(id='months',
                             options=[{'label':month_dict[i],'value':i} for i in list(df['Month'].unique())],
-                            value = 1)
+                            value = 1,
+                            placeholder="Select a month")
                 ]),
                 dcc.Graph(id='composition-graph')]),
-                html.Div([
+                html.Div([html.H6("Choose a minimum support threshold"),
                 dcc.Dropdown(
                     id='support',
                     options=[{'label': str(i), 'value': i} for i in support_thresholds],
-                    value=0.02
+                    value=0.02,
+                    placeholder="Select a minimum support threshold"
                     )], style={'width': '48%', 'display': 'inline-block'}),
 
-                html.Div([
+                html.Div([html.H6("Choose a minimum lift threshold"),
                 dcc.Dropdown(
                 id='lift',
                 options=[{'label': str(i), 'value': i} for i in lift_thresholds],
-                value=1
+                value=1,
+                placeholder="Select a minimum lift threshold"
                 )],style={'width': '48%', 'float': 'right', 'display': 'inline-block'}),
 
                 dcc.Graph(id="network"),

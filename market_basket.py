@@ -19,6 +19,11 @@ def encode_image(image_file):
     encoded = base64.b64encode(open(image_file, 'rb').read())
     return 'data:image/png;base64,{}'.format(encoded.decode())
 
+markdown_text = '''
+#### **Explaining the association rules results**
+
+'''
+
 df = pd.read_csv("Data/BreadBasket_DMS_modified.csv")
 # Get counts of each item per hour for each months
 byitem=df.groupby(["Month","Hour",'Item']).size().reset_index().sort_values(by="Hour")
@@ -48,6 +53,7 @@ lift_thresholds = [0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
 
 app.layout = html.Div([
                 html.Div([
+                    html.H4("Some Data Exploratory Analyses",style={'text-align':'center','color':'blue'}),
                     html.Div([
                         html.Div(["Pick a month",
                         dcc.Dropdown(id='months',
@@ -63,30 +69,35 @@ app.layout = html.Div([
                                     value = ['Coffee','Bread'],
                                     multi= True,
                                     placeholder="Select items")],style={'width': '70%', 'display': 'inline-block','margin-left':'40'}),
-                        dcc.Graph(id='itemgraph')],className='five columns', style={'margin-top': '10','margin-left':'5'})],
+                        dcc.Graph(id='itemgraph')],className='five columns', style={'margin-top': '10','margin-left':'10'})],
 
                     className='row'),
 
                 html.Div([
-                html.Div([
-                    html.Div(["Choose a minimum support threshold",
-                        dcc.Dropdown(id='support',
-                                    options=[{'label': str(i), 'value': i} for i in support_thresholds],
-                                    value=0.02,
-                                    placeholder="Select a minimum support threshold"
+                    html.H4("Market Basket Analysis",style={'text-align':'center','color':'blue'}),
+                    html.Div([
+                        html.Div(["Choose a minimum support threshold",
+                            dcc.Dropdown(id='support',
+                                        options=[{'label': str(i), 'value': i} for i in support_thresholds],
+                                        value=0.02,
+                                        placeholder="Select a minimum support threshold"
                                 )], style={'width': '35%', 'display': 'inline-block','margin-left':'30'}),
 
-                    html.Div(["Choose a minimum lift threshold",
-                        dcc.Dropdown(id='lift',
-                                    options=[{'label': str(i), 'value': i} for i in lift_thresholds],
-                                    value=1,
-                                    placeholder="Select a minimum lift threshold"
+                        html.Div(["Choose a minimum lift threshold",
+                            dcc.Dropdown(id='lift',
+                                        options=[{'label': str(i), 'value': i} for i in lift_thresholds],
+                                        value=1,
+                                        placeholder="Select a minimum lift threshold"
                                 )],style={'width': '30%', 'margin-left':'60','display': 'inline-block'}),
+                            html.Div([
+                                html.P("Interpreting an example of rule",style={'fontSize':16,'font-weight':'bold'}),
+                                html.P(id='output-text')],style={'margin-top':'20','width':'80%','margin-left':'30'}),
 
-                    dcc.Graph(id="network",style={'width': '90%'})],className='seven columns',style={'margin-top':'20'}),
-                html.Div([html.H6("Association rule tables",style={'text-align':'center'}),
-                html.Table(id='table')
-                ],className='five columns',style={'fontSize':14,'margin-top':'20'})],className='row')
+                            dcc.Graph(id="network",style={'width': '90%'})],className='seven columns',style={'margin-top':'20'}),
+
+                html.Div([html.H6("Association rule tables",style={'text-align':'center','font-weight':'bold','color':'red'}),
+                        html.Table(id='table')
+                        ],className='five columns',style={'fontSize':14,'margin-top':'20'})],className='row')
 ])
 
 
@@ -236,6 +247,27 @@ def update_networkgraph(support_min, lift_min):
                 yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))}
 
         return fig
+
+@app.callback(
+    Output('output-text', 'children'),
+    [Input('support', 'value'),
+     Input('lift', 'value')])
+def update_text(support_min, lift_min):
+    frequent_itemsets = apriori(dataframe, use_colnames=True, min_support=support_min)
+    rules = association_rules(frequent_itemsets, metric="lift", min_threshold=lift_min)
+    if rules.empty:
+        return 'No rules satisfy the chosen conditions'
+    else:
+        results=rules.sort_values(by='lift',ascending=False).head(2)
+        return '{}% of transactions that containing {}  contained {} while {}% of transactions containing {} contained {}. Lift value: {} is greater than 1, indicating dependency between two items.'.format(round(results['confidence'].iloc[0]*100,1),
+                                                                                        list(results['antecedents'].iloc[0])[0],
+                                                                                        list(results['consequents'].iloc[0])[0],
+                                                                                        round(results['confidence'].iloc[1]*100,1),
+                                                                                        list(results['antecedents'].iloc[1])[0],
+                                                                                        list(results['consequents'].iloc[1])[0],
+                                                                                        round(results['lift'].iloc[0],2))
+
+
 
 @app.callback(Output('table','children'),
             [Input('support', 'value'),

@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 app = dash.Dash()
 server = app.server
-app.css.append_css({'external_url':'https://codepen.io/chriddyp/pen/bWLwgP.css'})
+app.css.append_css({'external_url':'https://cdn.rawgit.com/plotly/dash-app-stylesheets/2d266c578d2a6e8850ebce48fdb52759b2aef506/stylesheet-oil-and-gas.css'})
 def encode_image(image_file):
     encoded = base64.b64encode(open(image_file, 'rb').read())
     return 'data:image/png;base64,{}'.format(encoded.decode())
@@ -42,60 +42,53 @@ with open('Data/itemlist.csv','r') as f:
 tran_encoder = TransactionEncoder()
 oht_ary = tran_encoder.fit(items).transform(items)
 dataframe = pd.DataFrame(oht_ary, columns=tran_encoder.columns_)
-print (dataframe.head())
-support_thresholds = [0.005,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1]
+
+support_thresholds = [0.005,0.008,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1]
 lift_thresholds = [0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
 
 app.layout = html.Div([
                 html.Div([
-                html.Div([
-                dcc.Dropdown(id='items',
-                            options=[{'label':i,'value':i} for i in list(df['Item'].unique())],
-                            value = ['Coffee','Bread'],
-                            multi= True)
-                ]),
-                dcc.Graph(id='itemgraph')]),
-                html.Div([
-                html.Div([html.H6("Pick a month"),
-                dcc.Dropdown(id='months',
-                            options=[{'label':month_dict[i],'value':i} for i in list(df['Month'].unique())],
-                            value = 1,
-                            placeholder="Select a month")
-                ]),
-                dcc.Graph(id='composition-graph')]),
-                html.Div([html.H6("Choose a minimum support threshold"),
-                dcc.Dropdown(
-                    id='support',
-                    options=[{'label': str(i), 'value': i} for i in support_thresholds],
-                    value=0.02,
-                    placeholder="Select a minimum support threshold"
-                    )], style={'width': '48%', 'display': 'inline-block'}),
+                    html.Div([
+                        html.Div(["Pick a month",
+                        dcc.Dropdown(id='months',
+                                    options=[{'label':month_dict[i],'value':i} for i in list(df['Month'].unique())],
+                                    value = 1,
+                                    placeholder="Select a month")],style={'width': '50%', 'display': 'inline-block','margin-left':'30'}),
+                        dcc.Graph(id='composition-graph')],className='seven columns',style={'margin-top': '10','margin-left':'0'}),
 
-                html.Div([html.H6("Choose a minimum lift threshold"),
-                dcc.Dropdown(
-                id='lift',
-                options=[{'label': str(i), 'value': i} for i in lift_thresholds],
-                value=1,
-                placeholder="Select a minimum lift threshold"
-                )],style={'width': '48%', 'float': 'right', 'display': 'inline-block'}),
+                    html.Div([
+                        html.Div(["Pick items",
+                        dcc.Dropdown(id='items',
+                                    options=[{'label':i,'value':i} for i in list(df['Item'].unique())],
+                                    value = ['Coffee','Bread'],
+                                    multi= True,
+                                    placeholder="Select items")],style={'width': '70%', 'display': 'inline-block','margin-left':'40'}),
+                        dcc.Graph(id='itemgraph')],className='five columns', style={'margin-top': '10','margin-left':'5'})],
 
-                dcc.Graph(id="network"),
+                    className='row'),
+
                 html.Div([
+                html.Div([
+                    html.Div(["Choose a minimum support threshold",
+                        dcc.Dropdown(id='support',
+                                    options=[{'label': str(i), 'value': i} for i in support_thresholds],
+                                    value=0.02,
+                                    placeholder="Select a minimum support threshold"
+                                )], style={'width': '35%', 'display': 'inline-block','margin-left':'30'}),
+
+                    html.Div(["Choose a minimum lift threshold",
+                        dcc.Dropdown(id='lift',
+                                    options=[{'label': str(i), 'value': i} for i in lift_thresholds],
+                                    value=1,
+                                    placeholder="Select a minimum lift threshold"
+                                )],style={'width': '30%', 'margin-left':'60','display': 'inline-block'}),
+
+                    dcc.Graph(id="network",style={'width': '90%'})],className='seven columns',style={'margin-top':'20'}),
+                html.Div([html.H6("Association rule tables",style={'text-align':'center'}),
                 html.Table(id='table')
-                ])], style={'padding':10})
+                ],className='five columns',style={'fontSize':14,'margin-top':'20'})],className='row')
+])
 
-@app.callback(Output('itemgraph', 'figure'),
-            [Input('items', 'value')])
-def update_itemgraph(item_toplot):
-    traces=[go.Scatter(
-    x = byitem[byitem['Item']==item]['Hour'].unique(),
-    y = byitem[byitem['Item']==item].groupby("Hour")['Total'].mean().round(1),
-    mode = 'markers+lines',
-    name = item) for item in item_toplot]
-
-    return {'data':traces,
-            'layout':go.Layout(
-                title = 'Average number of items sold at each hour')}
 
 @app.callback(Output('composition-graph', 'figure'),
             [Input('months', 'value')])
@@ -110,10 +103,25 @@ def update_compositiongraph(month):
         col_dicts[col] = colors[cols.index(col)]
 
     data = [go.Bar(x=byitem_month_pivot.index,y=byitem_month_pivot[col],name=col,marker={'color':col_dicts[col]}) for col in cols]
-    layout = go.Layout(title="Number of Items sold in " + month_dict[month],barmode='stack')
+    layout = go.Layout(title="Number of Items sold in " + month_dict[month],barmode='stack',
+                        xaxis={'title':'Hour'},height=500)
     return {'data':data,'layout':layout}
 
+@app.callback(Output('itemgraph', 'figure'),
+            [Input('items', 'value')])
+def update_itemgraph(item_toplot):
+    traces=[go.Scatter(
+    x = byitem[byitem['Item']==item]['Hour'].unique(),
+    y = byitem[byitem['Item']==item].groupby("Hour")['Total'].mean().round(1),
+    mode = 'markers+lines',
+    name = item) for item in item_toplot]
 
+    return {'data':traces,
+            'layout':go.Layout(
+                title = 'Average number of items sold at each hour',
+                xaxis={'title':'Hour'},
+                yaxis={'title':'Count'},
+                height=500)}
 
 @app.callback(
     Output('network', 'figure'),
@@ -208,11 +216,13 @@ def update_networkgraph(support_min, lift_min):
 
         fig = {'data':[node_trace],
               'layout':go.Layout(
-                title='<br>Network graph of market basket analysis - Association rule learning<br>',
+                title='<br>Network graph of market basket analysis <br> Association rule learning<br>',
                 titlefont=dict(size=16),
+                width=550,
+                height=550,
                 showlegend=False,
                 hovermode='closest',
-                margin=dict(b=20,l=5,r=5,t=40),
+                margin=dict(b=0,l=0,r=5,t=70),
                 annotations=[ dict(
                     showarrow=True,
                     arrowhead=3,
@@ -231,9 +241,10 @@ def update_networkgraph(support_min, lift_min):
             [Input('support', 'value'),
              Input('lift', 'value')])
 def update_table(support_min, lift_min):
-    max_rows=50
+    max_rows=20
     frequent_itemsets = apriori(dataframe, use_colnames=True, min_support=support_min)
     rules = association_rules(frequent_itemsets, metric="lift", min_threshold=lift_min)
+    rules.sort_values(by='lift',ascending=False,inplace=True)
     rules['antecedents'] = rules['antecedents'].apply(lambda x:list(x)[0])
     rules['consequents']= rules['consequents'].apply(lambda x:list(x)[0])
     for col in ['antecedent support','consequent support', 'support', 'confidence', 'lift', 'leverage','conviction']:
